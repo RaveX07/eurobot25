@@ -15,5 +15,5 @@ void setup() {
 
 void loop() {
     updatePos();
-    delay(7);
+    delay(8);
 }
