@@ -12,11 +12,27 @@ def add_with_limits(a, b, max_value):
         return 0
     return result
 
+
+
 class Position():
     def __init__(self, x, y, theta=0):
         self.x = x
         self.y = y
         self.theta = theta
+        
+        self.limit()
+        
+    def limit(self):
+        if(self.x > 2999):
+            self.x = 2999
+        elif(self.x < 0):
+            self.x = 0
+        
+        if(self.y > 1999):
+            self.y = 1999
+        elif(self.y < 0):
+            self.y = 0
+            
 
 class Pathfinder():
     def __init__(self, start=Position(100,100), target=Position(2900, 1900), map_size=[3000, 2000], max_iters=1000):
@@ -25,6 +41,7 @@ class Pathfinder():
         self.map_size = map_size
         self.obstacle_map = np.zeros((map_size[1], map_size[0]), dtype='int32')
         self.max_iters = max_iters
+        self.width = 180
         
         # stacks
         self.add_stack(Position(900, 900), Position(1300, 1000))
@@ -34,7 +51,7 @@ class Pathfinder():
         self.add_stack(Position(550, 0), Position(950, 100))
         self.add_stack(Position(2050, 0), Position(2450, 100))
         self.add_stack(Position(2600, 450), Position(2999, 550))
-        # self.add_stack(Position(0, 450), Position(400, 550))
+        self.add_stack(Position(0, 450), Position(400, 550))
         self.add_stack(Position(2600, 1000), Position(2999, 1100))
         self.add_stack(Position(0, 1000), Position(400, 1100))
         
@@ -53,16 +70,36 @@ class Pathfinder():
     def distance(self, node1: Position, node2: Position):
         return int(sqrt((node1.x - node2.x)**2+(node1.y - node2.y)**2))
     
-    def add_stack(self, pos1: Position, pos2: Position):
-        pos1 = Position(add_with_limits(pos1.x, -145, 2999), add_with_limits(pos1.y, -145, 1999))
-        pos2 = Position(add_with_limits(pos2.x, 145, 2999), add_with_limits(pos2.y, 145, 1999))
+    def calculate_parallel_points(self, pos1: Position, pos2: Position, distance):
+        # Ursprüngliche Punkte als numpy-Arrays
+        point1 = np.array([pos1.x, pos1.y])
+        point2 = np.array([pos2.x, pos2.y])
         
+        # Richtungsvektor der Strecke x1y1
+        d = point2 - point1
+
+        # Senkrechter Vektor
+        n = np.array([-d[1], d[0]])
+        
+        # Normierter senkrechter Vektor (Einheitsvektor)
+        unit_n = n / np.linalg.norm(n)
+        
+        # Verschiebung um die gegebene Distanz
+        shift_vector = distance * unit_n
+        
+        # Berechne die neuen Punkte x und y
+        point1 = point1 + shift_vector
+        point2 = point2 + shift_vector
+        
+        # Die neuen Punkte werden zurückgegeben als (x, y)-Koordinatenpaare
+        # print("Punkt1: x=" + str(int(x[0])) + ", y=" + str(int(x[1])))
+        # print("Punkt2: x=" + str(int(y[0])) + ", y=" + str(int(y[1])))
+        return Position(int(point1[0]), int(point1[1])), Position(int(point2[0]), int(point2[1]))
+    
+    def add_stack(self, pos1: Position, pos2: Position):
         self.obstacle_map[pos1.y:pos2.y, pos1.x:pos2.x] = 2
         
     def add_obstacle(self, pos1: Position, pos2: Position):
-        pos1 = Position(add_with_limits(pos1.x, -145, 2999), add_with_limits(pos1.y, -145, 1999))
-        pos2 = Position(add_with_limits(pos2.x, 145, 2999), add_with_limits(pos2.y, 145, 1999))
-        
         self.obstacle_map[pos1.y:pos2.y, pos1.x:pos2.x] = 1
 
     def collission(self, node1: Position, node2: Position):
@@ -77,6 +114,14 @@ class Pathfinder():
             
         return False
     
+    def collission_with_bot(self, node1: Position, node2: Position):
+        pos1, pos2 = self.calculate_parallel_points(node1, node2, self.width)
+        pos3, pos4 = self.calculate_parallel_points(node1, node2, -self.width)
+        if self.collission(node1, node2) or self.collission(pos1, pos2) or self.collission(pos3, pos4):
+            return True
+        
+        return False
+        
     def find_middle_point(self, node1: Position, node2: Position):
         print("find middle point")
         middle_x = int((node1.x + node2.x)/2)
@@ -94,29 +139,35 @@ class Pathfinder():
         
         return Position(x, y)
     
-    def plan(self, start, target) -> list[Position]:    
-        path = []
-            
-        if not self.collission(start, target): return []
+    def plan(self, start, target) -> list[Position]:       
+        # if no collision return target         
+        if not self.collission_with_bot(start, target): return [target]
         
+        # look for possible paths
         possibilities = []
         for i in range(self.max_iters):
             pos = Position(random.randint(0, 2999), random.randint(0, 1999))
-            if not self.collission(start, pos) and not self.collission(pos, target):
+            if not self.collission_with_bot(start, pos) and not self.collission_with_bot(pos, target):
                 possibilities.append(pos)
         
+        # check if paths were found
         if len(possibilities) <= 0:
-            middle_pos = self.find_middle_point(start, target)
-            return self.plan(start, middle_pos) + [middle_pos] + self.plan(middle_pos, target)
-                
-        best_pos = [0, 9999]
+            print("No way found")
+            return []
+            # middle_pos = self.find_middle_point(start, target)
+            # return self.plan(start, middle_pos) + [middle_pos] + self.plan(middle_pos, target)
+        
+        # find best pos (shortest path)
+        best_pos_index = 0
+        best_pos_distance = 9999
         for x in possibilities:
             dist = self.distance(start, x) + self.distance(x, target)
-            if dist < best_pos[1]:
-                best_pos[0] = possibilities.index(x)
-                best_pos[1] = dist
-                
-        return [possibilities[best_pos[0]]]
+            if dist < best_pos_distance:
+                best_pos_index = possibilities.index(x)
+                best_pos_distance = dist
+            
+        # return best path
+        return [possibilities[best_pos_index], target]
     
     def display(self, path: list[Position]):
         plt.imshow(self.obstacle_map, cmap='gray', origin='lower')
@@ -153,6 +204,6 @@ class Pathfinder():
         path = self.plan(self.start, self.target)
         self.display(path)
 
-pathfinder = Pathfinder(start=Position(100, 100), target=Position(2600, 1700))
+pathfinder = Pathfinder(start=Position(1500, 500), target=Position(500, 1500))
 # pathfinder = Pathfinder(start=Position(2600, 1400), target=Position(2700, 1500))
 pathfinder.proccess()
