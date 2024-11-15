@@ -35,13 +35,13 @@ class Position():
             
 
 class Pathfinder():
-    def __init__(self, start=Position(100,100), target=Position(2900, 1900), map_size=[3000, 2000], max_iters=1000):
+    def __init__(self, start=Position(100,100), target=Position(2900, 1900), map_size=[3000, 2000], max_iters=1250, bot_width=180):
         self.start = start
         self.target = target
         self.map_size = map_size
         self.obstacle_map = np.zeros((map_size[1], map_size[0]), dtype='int32')
         self.max_iters = max_iters
-        self.width = 180
+        self.bot_width = bot_width
         
         # stacks
         self.add_stack(Position(900, 900), Position(1300, 1000))
@@ -87,7 +87,7 @@ class Pathfinder():
         # Verschiebung um die gegebene Distanz
         shift_vector = distance * unit_n
         
-        # Berechne die neuen Punkte x und y
+        # calculation of 2 points
         point1 = point1 + shift_vector
         point2 = point2 + shift_vector
         
@@ -103,7 +103,10 @@ class Pathfinder():
         self.obstacle_map[pos1.y:pos2.y, pos1.x:pos2.x] = 1
 
     def collission(self, node1: Position, node2: Position):
+        # get distance between to points
         distance = self.distance(node1, node2)
+        
+        # check all points on path
         for i in range(distance):
             t = i / distance
             x = int(node1.x + t * (node2.x - node1.x))
@@ -115,15 +118,19 @@ class Pathfinder():
         return False
     
     def collission_with_bot(self, node1: Position, node2: Position):
-        pos1, pos2 = self.calculate_parallel_points(node1, node2, self.width)
-        pos3, pos4 = self.calculate_parallel_points(node1, node2, -self.width)
-        if self.collission(node1, node2) or self.collission(pos1, pos2) or self.collission(pos3, pos4):
+        # outer dimmension of bot 
+        right1, right2 = self.calculate_parallel_points(node1, node2, self.bot_width)
+        left1, left2 = self.calculate_parallel_points(node1, node2, -self.bot_width)
+        
+        # check if bot does not collide 
+        if self.collission(node1, node2) or self.collission(right1, right2) or self.collission(left1, left2):
             return True
         
         return False
-        
+    
+    # not in use (not really useable)
     def find_middle_point(self, node1: Position, node2: Position):
-        print("find middle point")
+        # print("find middle point")
         middle_x = int((node1.x + node2.x)/2)
         middle_y = int((node1.y + node2.y)/2)
         
@@ -149,7 +156,7 @@ class Pathfinder():
             pos = Position(random.randint(0, 2999), random.randint(0, 1999))
             if not self.collission_with_bot(start, pos) and not self.collission_with_bot(pos, target):
                 possibilities.append(pos)
-        
+        print(len(possibilities))
         # check if paths were found
         if len(possibilities) <= 0:
             print("No way found")
