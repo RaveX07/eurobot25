@@ -1,5 +1,5 @@
 /.DS_Store
-/a*.cpp
-/a*.py
-/rrt.py
-teensy_main/.DS_Store
+arduino/.DS_Store
+raspi/__pycache__
+raspi/.venv
+.vscode
