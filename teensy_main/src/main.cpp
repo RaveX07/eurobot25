@@ -1,7 +1,9 @@
 #include <Arduino.h>
 #include "odometry.h"
-#include "pathfinder.h"
+// #include "pathfinder.h"
 
+// Position start(1500, 500);
+// Position target(500, 1500);
 
 void setup() {
     Serial.begin(115200);
@@ -13,14 +15,12 @@ void setup() {
     attachInterrupt(digitalPinToInterrupt(ENC_LEFT_A_PHASE), changeLeft, CHANGE);
     attachInterrupt(digitalPinToInterrupt(ENC_RIGHT_A_PHASE), changeRight, CHANGE);
 
-    Position start(1500, 500);
-    Position target(500, 1500);
-
-    Pathfinder pathfinder(start, target);
-    pathfinder.plan();
+    // Pathfinder pathfinder(start, target);
+    // pathfinder.plan();
 }
 
 void loop() {
     updatePos();
+    sendData();
     delay(8);
 }

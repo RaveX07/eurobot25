@@ -46,6 +46,17 @@ void changeRight(){
     }
 }
 
+void sendData(){
+    String data;
+    data += "x";
+    data += String(x);
+    data += "y";
+    data += String(y);
+    data += "t";
+    data += String(theta * 180.0 / PI);
+    Serial.println(data);
+}
+
 void updatePos(){
     // get tick differnce for each wheel
     float leftWheelDif = counterLeft - lastCounterLeft;
@@ -73,15 +84,7 @@ void updatePos(){
     while (theta < -2 * M_PI) theta += 2 * M_PI;
     if(theta < 0) theta = 2 * M_PI - theta;
 
-    // print global pos
-    Serial.print("X: ");
-    Serial.println(x);
-    Serial.print("Y: ");
-    Serial.println(y);
-    Serial.print("Theta: ");
-    Serial.println(theta * (180.0 / M_PI)); // theta in DEG
-
-    Serial.println("####################");
+    sendData();
 }
 
 #endif
