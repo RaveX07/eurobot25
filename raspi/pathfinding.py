@@ -3,6 +3,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from heapq import heappop, heappush
+from position import Position
 
 def add_with_limits(a, b, max_value):
     result = a + b
@@ -11,27 +12,6 @@ def add_with_limits(a, b, max_value):
     elif result < 0:
         return 0
     return result
-
-
-
-class Position():
-    def __init__(self, x, y, theta=0):
-        self.x = x
-        self.y = y
-        self.theta = theta
-        
-        self.limit()
-        
-    def limit(self):
-        if(self.x > 2999):
-            self.x = 2999
-        elif(self.x < 0):
-            self.x = 0
-        
-        if(self.y > 1999):
-            self.y = 1999
-        elif(self.y < 0):
-            self.y = 0
             
 
 class Pathfinder():
