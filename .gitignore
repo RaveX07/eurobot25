@@ -1,5 +1,5 @@
 /.DS_Store
 arduino/.DS_Store
 raspi/__pycache__
-raspi/.venv
+raspi/venv
 .vscode
