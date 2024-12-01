@@ -13,7 +13,7 @@ class SerialManager():
         self.ser.setDTR(True)
         time.sleep(2)
 
-    # serial string to x, y, z
+    # serial string to x, y, t
     def extract_values(self, s):
         # Find matches for x, y, and t as floats
         x_match = re.search(r'x([-+]?\d+\.\d+)', s)
@@ -31,7 +31,10 @@ class SerialManager():
         
         return x, y, t
     
-    def get_pos(self):
+    def send_pwm(self, left_pwm: tuple[int], right_pwm: tuple[int]):
+        self.ser.write(f"{left_pwm[0]};{left_pwm[1]};{right_pwm[0]};{right_pwm[1]}")
+    
+    def get_pos(self) -> Position:
         self.ser.flushInput()
         
         while True:
@@ -42,8 +45,3 @@ class SerialManager():
 
         print(f'Arduino sent: x:{x}, y:{y}, t:{t}')
         return Position(x, y, t)
-
-manager = SerialManager()
-while True:
-    manager.get_pos()
-    time.sleep(1)
