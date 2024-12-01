@@ -5,8 +5,12 @@
 // Position start(1500, 500);
 // Position target(500, 1500);
 
+int pwm_left[2] = {0, 0};
+int pwm_right[2] = {0, 0};
+
 void setup() {
     Serial.begin(115200);
+    Serial.setTimeout(5);
 
     pinMode(ENC_LEFT_A_PHASE, INPUT_PULLUP);
     pinMode(ENC_LEFT_B_PHASE, INPUT_PULLUP);
@@ -20,10 +24,11 @@ void setup() {
 }
 
 void getData(){
-    String data = Serial.readStringUntil('\n');
+    if(Serial.available() <= 0){
+        return;
+    }
 
-    int pwm_left[2];
-    int pwm_right[2];
+    String data = Serial.readStringUntil('\n');
 
     char charBuf[data.length() + 1];
     data.toCharArray(charBuf, sizeof(charBuf));
@@ -42,27 +47,10 @@ void getData(){
         token = strtok(NULL, ";");
     }
 
-    // Print out the extracted values to verify
-    Serial.println("Left Values:");
-    for (int i = 0; i < 2; i++) {
-        Serial.print("Left Value ");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.println(pwm_left[i]);
-    }
-    
-    Serial.println("Right Values:");
-    for (int i = 0; i < 2; i++) {
-        Serial.print("Right Value ");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.println(pwm_right[i]);
-    } 
-
 }
 
 void loop() {
     updatePos();
+    delay(5);
     getData();
-    delay(8);
 }

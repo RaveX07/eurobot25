@@ -5,7 +5,7 @@ from position import Position
 
 class SerialManager():
     def __init__(self, port="/dev/ttyACM0", baud_rate=115200):
-        self.ser = serial.Serial(port, baud_rate, timeout=1)
+        self.ser = serial.Serial(port, baud_rate, timeout=3)
         
         self.ser.setDTR(False)
         time.sleep(1)
@@ -32,16 +32,25 @@ class SerialManager():
         return x, y, t
     
     def send_pwm(self, left_pwm: tuple[int], right_pwm: tuple[int]):
-        self.ser.write(f"{left_pwm[0]};{left_pwm[1]};{right_pwm[0]};{right_pwm[1]}")
+        pwm_string = f"{left_pwm[0]};{left_pwm[1]};{right_pwm[0]};{right_pwm[1]}\n"
+        pwm_as_bytes = str.encode(pwm_string) # convert string to bytes
+        self.ser.write(pwm_as_bytes)
+    
+    
+    def read_input(self) -> str:
+        # flush input to get the latest data
+        self.ser.flushInput()
+
+        while True:
+            line = self.ser.readline().decode("utf-8")
+            
+            if line and line[0] == 'x': # make shure to get complete data
+                return line
     
     def get_pos(self) -> Position:
-        self.ser.flushInput()
-        
-        while True:
-            line = self.ser.readline()
-            if line:
-                x, y, t = self.extract_values(line.decode("utf-8"))
-                break
+        serial_input = self.read_input() # get latest input
+        x, y, t = self.extract_values(serial_input) # extract x y theta from serial data
 
         print(f'Arduino sent: x:{x}, y:{y}, t:{t}')
         return Position(x, y, t)
+    
