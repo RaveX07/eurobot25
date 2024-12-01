@@ -19,8 +19,50 @@ void setup() {
     // pathfinder.plan();
 }
 
+void getData(){
+    String data = Serial.readStringUntil('\n');
+
+    int pwm_left[2];
+    int pwm_right[2];
+
+    char charBuf[data.length() + 1];
+    data.toCharArray(charBuf, sizeof(charBuf));
+
+    char* token = strtok(charBuf, ";");
+    
+    // pwm values for left motor
+    for (int i = 0; i < 2 && token != NULL; i++) {
+        pwm_left[i] = atoi(token);
+        token = strtok(NULL, ";");
+    }
+    
+    // pwm values for right motor
+    for (int i = 0; i < 2 && token != NULL; i++) {
+        pwm_right[i] = atoi(token);
+        token = strtok(NULL, ";");
+    }
+
+    // Print out the extracted values to verify
+    Serial.println("Left Values:");
+    for (int i = 0; i < 2; i++) {
+        Serial.print("Left Value ");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.println(pwm_left[i]);
+    }
+    
+    Serial.println("Right Values:");
+    for (int i = 0; i < 2; i++) {
+        Serial.print("Right Value ");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.println(pwm_right[i]);
+    } 
+
+}
+
 void loop() {
     updatePos();
-    sendData();
+    getData();
     delay(8);
 }
